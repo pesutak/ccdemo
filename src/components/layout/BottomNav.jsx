@@ -6,12 +6,12 @@ import { buildLiquidGlassFilter } from '../../utils/liquidGlass'
 const NAV_FILTER_ID = 'lg-nav-filter'
 const glassProps = buildLiquidGlassFilter({
   filterId: NAV_FILTER_ID,
-  width: 380,
-  height: 72,
-  radius: 24,
-  depth: 10,
-  strength: 24,
-  chromaticAberration: 3,
+  width: 420,
+  height: 76,
+  radius: 26,
+  depth: 12,
+  strength: 40,
+  chromaticAberration: 5,
 })
 
 const navItems = [
@@ -29,7 +29,7 @@ export default function BottomNav() {
 
   return (
     <>
-      {/* Hidden SVG — liquid glass filter definition (Chrome/Edge backdrop-filter) */}
+      {/* Inline SVG filter — referenced by backdrop-filter in Chrome/Edge */}
       <svg
         style={{ position: 'fixed', width: 0, height: 0, overflow: 'hidden', zIndex: -1 }}
         aria-hidden="true"
@@ -37,8 +37,8 @@ export default function BottomNav() {
         <defs>
           <filter
             id={NAV_FILTER_ID}
-            x="-10%" y="-10%"
-            width="120%" height="120%"
+            x="-15%" y="-15%"
+            width="130%" height="130%"
             colorInterpolationFilters="sRGB"
           >
             <feImage
@@ -64,56 +64,92 @@ export default function BottomNav() {
       <nav
         style={{
           position: 'fixed',
-          bottom: 20,
+          bottom: 18,
           left: '50%',
           transform: 'translateX(-50%)',
-          width: 'calc(100% - 32px)',
-          maxWidth: 440,
+          width: 'calc(100% - 28px)',
+          maxWidth: 448,
           zIndex: 40,
-          // Outer shadow + floating glow — NOT clipped by border-radius
-          filter: 'drop-shadow(0 8px 28px rgba(0,0,0,0.55)) drop-shadow(0 2px 8px rgba(0,0,0,0.4))',
         }}
       >
-        {/*
-          Two-layer structure for reliable rounded corners with backdrop-filter:
-          - Outer div: border-radius + overflow:hidden → clips the backdrop to rounded shape
-          - Inner backdrop div: absolute fill, applies the glass blur + SVG filter
-          - Content div: relative, sits above the backdrop layer
-        */}
+        {/* Outer shadow ring — rendered outside the clip boundary */}
         <div
           style={{
-            borderRadius: 26,
+            position: 'absolute',
+            inset: -1,
+            borderRadius: 28,
+            boxShadow: [
+              '0 12px 48px rgba(0,0,0,0.65)',
+              '0 4px 16px rgba(0,0,0,0.45)',
+              '0 0 0 1px rgba(255,255,255,0.12)',
+            ].join(', '),
+            pointerEvents: 'none',
+          }}
+        />
+
+        {/* Glass pill — overflow:hidden clips backdrop to border-radius */}
+        <div
+          style={{
+            borderRadius: 27,
             overflow: 'hidden',
-            height: 68,
+            height: 72,
             position: 'relative',
-            border: '1px solid rgba(255,255,255,0.18)',
-            borderTop: '1px solid rgba(255,255,255,0.28)',
+            isolation: 'isolate',
           }}
         >
-          {/* Backdrop layer — glass blur + refraction */}
+          {/* ── Layer 1: Backdrop with SVG refraction + blur ── */}
           <div
             style={{
               position: 'absolute',
               inset: 0,
-              borderRadius: 26,
-              backdropFilter: `url('#${NAV_FILTER_ID}') blur(28px) saturate(190%) brightness(1.08)`,
-              WebkitBackdropFilter: 'blur(28px) saturate(190%) brightness(1.08)',
-              background: 'linear-gradient(145deg, rgba(255,255,255,0.11) 0%, rgba(255,255,255,0.04) 60%, rgba(249,115,22,0.06) 100%)',
+              backdropFilter: `url('#${NAV_FILTER_ID}') blur(40px) saturate(220%) brightness(1.15)`,
+              WebkitBackdropFilter: 'blur(40px) saturate(220%) brightness(1.15)',
             }}
           />
 
-          {/* Specular highlight — top shimmer */}
+          {/* ── Layer 2: Glass tint — light enough to be clearly visible ── */}
           <div
             style={{
               position: 'absolute',
               inset: 0,
-              borderRadius: 26,
-              background: 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.02) 35%, transparent 65%)',
+              background: [
+                'linear-gradient(170deg,',
+                '  rgba(255,255,255,0.22) 0%,',
+                '  rgba(255,255,255,0.10) 40%,',
+                '  rgba(30,30,35,0.55) 100%)',
+              ].join(''),
+            }}
+          />
+
+          {/* ── Layer 3: Specular highlight — bright top shimmer ── */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '42%',
+              background: 'linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.06) 70%, transparent 100%)',
               pointerEvents: 'none',
             }}
           />
 
-          {/* Nav items — above glass layers */}
+          {/* ── Layer 4: Bottom inner shadow for depth ── */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              boxShadow: [
+                'inset 0 1px 0 rgba(255,255,255,0.35)',
+                'inset 0 -1px 0 rgba(0,0,0,0.25)',
+                'inset 1px 0 0 rgba(255,255,255,0.08)',
+                'inset -1px 0 0 rgba(255,255,255,0.08)',
+              ].join(', '),
+              pointerEvents: 'none',
+            }}
+          />
+
+          {/* ── Layer 5: Nav items ── */}
           <div
             style={{
               position: 'relative',
@@ -122,7 +158,7 @@ export default function BottomNav() {
               alignItems: 'center',
               justifyContent: 'space-around',
               height: '100%',
-              padding: '0 4px',
+              padding: '0 6px',
             }}
           >
             {navItems.map(({ path, icon: Icon, key, accent }) => {
@@ -138,44 +174,59 @@ export default function BottomNav() {
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: 2,
-                    padding: '8px 0',
-                    transition: 'all 0.2s',
+                    gap: 3,
+                    paddingTop: 10,
+                    paddingBottom: 8,
                     background: 'none',
                     border: 'none',
                     cursor: 'pointer',
+                    WebkitTapHighlightColor: 'transparent',
+                    transition: 'opacity 0.15s',
                   }}
                 >
-                  {/* Glowing active dot */}
+                  {/* Active glow dot */}
                   <div
                     style={{
-                      width: 4,
-                      height: 4,
+                      width: isActive ? 5 : 4,
+                      height: isActive ? 5 : 4,
                       borderRadius: '50%',
-                      marginBottom: 1,
                       background: isActive ? '#f97316' : 'transparent',
-                      boxShadow: isActive ? '0 0 8px 3px rgba(249,115,22,0.55)' : 'none',
+                      boxShadow: isActive ? '0 0 10px 4px rgba(249,115,22,0.6)' : 'none',
+                      transition: 'all 0.3s ease',
+                      marginBottom: 1,
+                    }}
+                  />
+
+                  {/* Icon */}
+                  <Icon
+                    size={23}
+                    strokeWidth={isActive ? 2.5 : 1.8}
+                    style={{
+                      color: accent
+                        ? '#f97316'
+                        : isActive
+                        ? '#ff9d4d'
+                        : 'rgba(255,255,255,0.55)',
+                      filter: isActive && !accent
+                        ? 'drop-shadow(0 0 7px rgba(249,115,22,0.7))'
+                        : 'none',
                       transition: 'all 0.25s ease',
                     }}
                   />
-                  <Icon
-                    size={22}
-                    strokeWidth={isActive ? 2.5 : 1.8}
-                    style={{
-                      color: accent ? '#f97316' : isActive ? '#fb923c' : 'rgba(255,255,255,0.42)',
-                      filter: isActive && !accent
-                        ? 'drop-shadow(0 0 5px rgba(249,115,22,0.55))'
-                        : 'none',
-                      transition: 'all 0.2s',
-                    }}
-                  />
+
+                  {/* Label */}
                   <span
                     style={{
-                      fontSize: 9,
+                      fontSize: 9.5,
                       fontWeight: isActive ? 700 : 500,
                       letterSpacing: '0.03em',
-                      color: accent ? '#f97316' : isActive ? '#fb923c' : 'rgba(255,255,255,0.36)',
-                      transition: 'color 0.2s',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+                      color: accent
+                        ? '#f97316'
+                        : isActive
+                        ? '#ff9d4d'
+                        : 'rgba(255,255,255,0.45)',
+                      transition: 'color 0.25s',
                     }}
                   >
                     {t(key)}
