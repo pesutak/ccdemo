@@ -48,94 +48,83 @@ export default function BottomNav() {
               width="100%" height="100%"
               preserveAspectRatio="none"
             />
-            {/* Red channel — highest displacement (chromatic aberration) */}
-            <feDisplacementMap
-              in="SourceGraphic" in2="map"
-              scale={glassProps.rScale}
-              xChannelSelector="R" yChannelSelector="G"
-              result="rD"
-            />
-            <feColorMatrix
-              type="matrix"
-              values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"
-              in="rD" result="rC"
-            />
-            {/* Green channel */}
-            <feDisplacementMap
-              in="SourceGraphic" in2="map"
-              scale={glassProps.gScale}
-              xChannelSelector="R" yChannelSelector="G"
-              result="gD"
-            />
-            <feColorMatrix
-              type="matrix"
-              values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0"
-              in="gD" result="gC"
-            />
-            {/* Blue channel — lowest displacement */}
-            <feDisplacementMap
-              in="SourceGraphic" in2="map"
-              scale={glassProps.bScale}
-              xChannelSelector="R" yChannelSelector="G"
-              result="bD"
-            />
-            <feColorMatrix
-              type="matrix"
-              values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"
-              in="bD" result="bC"
-            />
-            {/* Merge R+G+B via screen blend */}
+            <feDisplacementMap in="SourceGraphic" in2="map" scale={glassProps.rScale} xChannelSelector="R" yChannelSelector="G" result="rD" />
+            <feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" in="rD" result="rC" />
+            <feDisplacementMap in="SourceGraphic" in2="map" scale={glassProps.gScale} xChannelSelector="R" yChannelSelector="G" result="gD" />
+            <feColorMatrix type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" in="gD" result="gC" />
+            <feDisplacementMap in="SourceGraphic" in2="map" scale={glassProps.bScale} xChannelSelector="R" yChannelSelector="G" result="bD" />
+            <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" in="bD" result="bC" />
             <feBlend in="rC" in2="gC" mode="screen" result="rg" />
             <feBlend in="rg" in2="bC" mode="screen" />
           </filter>
         </defs>
       </svg>
 
-      {/* Floating nav panel */}
+      {/* Floating nav */}
       <nav
-        className="fixed z-40"
         style={{
+          position: 'fixed',
           bottom: 20,
           left: '50%',
           transform: 'translateX(-50%)',
           width: 'calc(100% - 32px)',
           maxWidth: 440,
+          zIndex: 40,
+          // Outer shadow + floating glow — NOT clipped by border-radius
+          filter: 'drop-shadow(0 8px 28px rgba(0,0,0,0.55)) drop-shadow(0 2px 8px rgba(0,0,0,0.4))',
         }}
       >
-        {/* Glass shell */}
+        {/*
+          Two-layer structure for reliable rounded corners with backdrop-filter:
+          - Outer div: border-radius + overflow:hidden → clips the backdrop to rounded shape
+          - Inner backdrop div: absolute fill, applies the glass blur + SVG filter
+          - Content div: relative, sits above the backdrop layer
+        */}
         <div
           style={{
             borderRadius: 26,
+            overflow: 'hidden',
             height: 68,
             position: 'relative',
-            overflow: 'hidden',
-            // Chrome/Edge: SVG displacement + blur for refraction effect
-            backdropFilter: `url('#${NAV_FILTER_ID}') blur(28px) saturate(190%) brightness(1.08)`,
-            WebkitBackdropFilter: 'blur(28px) saturate(190%) brightness(1.08)',
-            background: 'linear-gradient(145deg, rgba(255,255,255,0.11) 0%, rgba(255,255,255,0.04) 60%, rgba(249,115,22,0.07) 100%)',
             border: '1px solid rgba(255,255,255,0.18)',
             borderTop: '1px solid rgba(255,255,255,0.28)',
-            boxShadow: [
-              '0 8px 40px rgba(0,0,0,0.55)',
-              '0 2px 12px rgba(0,0,0,0.35)',
-              'inset 0 1px 0 rgba(255,255,255,0.22)',
-              'inset 0 -1px 0 rgba(0,0,0,0.12)',
-            ].join(', '),
           }}
         >
-          {/* Specular highlight — top edge shimmer */}
+          {/* Backdrop layer — glass blur + refraction */}
           <div
             style={{
               position: 'absolute',
               inset: 0,
               borderRadius: 26,
-              background: 'linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 30%, transparent 60%)',
+              backdropFilter: `url('#${NAV_FILTER_ID}') blur(28px) saturate(190%) brightness(1.08)`,
+              WebkitBackdropFilter: 'blur(28px) saturate(190%) brightness(1.08)',
+              background: 'linear-gradient(145deg, rgba(255,255,255,0.11) 0%, rgba(255,255,255,0.04) 60%, rgba(249,115,22,0.06) 100%)',
+            }}
+          />
+
+          {/* Specular highlight — top shimmer */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: 26,
+              background: 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.02) 35%, transparent 65%)',
               pointerEvents: 'none',
             }}
           />
 
-          {/* Nav items */}
-          <div className="flex items-center justify-around h-full px-1 relative">
+          {/* Nav items — above glass layers */}
+          <div
+            style={{
+              position: 'relative',
+              zIndex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-around',
+              height: '100%',
+              padding: '0 4px',
+            }}
+          >
             {navItems.map(({ path, icon: Icon, key, accent }) => {
               const isActive =
                 location.pathname === path ||
@@ -144,37 +133,48 @@ export default function BottomNav() {
                 <button
                   key={key}
                   onClick={() => navigate(path)}
-                  className="flex flex-col items-center gap-0.5 flex-1 py-2 transition-all"
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 2,
+                    padding: '8px 0',
+                    transition: 'all 0.2s',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
                 >
-                  {/* Active indicator dot */}
+                  {/* Glowing active dot */}
                   <div
                     style={{
                       width: 4,
                       height: 4,
                       borderRadius: '50%',
-                      marginBottom: 2,
+                      marginBottom: 1,
                       background: isActive ? '#f97316' : 'transparent',
-                      boxShadow: isActive ? '0 0 6px 2px rgba(249,115,22,0.5)' : 'none',
+                      boxShadow: isActive ? '0 0 8px 3px rgba(249,115,22,0.55)' : 'none',
                       transition: 'all 0.25s ease',
                     }}
                   />
                   <Icon
                     size={22}
-                    className="transition-all duration-200"
-                    style={{
-                      color: accent ? '#f97316' : isActive ? '#fb923c' : 'rgba(255,255,255,0.45)',
-                      filter: isActive && !accent
-                        ? 'drop-shadow(0 0 6px rgba(249,115,22,0.6))'
-                        : 'none',
-                    }}
                     strokeWidth={isActive ? 2.5 : 1.8}
+                    style={{
+                      color: accent ? '#f97316' : isActive ? '#fb923c' : 'rgba(255,255,255,0.42)',
+                      filter: isActive && !accent
+                        ? 'drop-shadow(0 0 5px rgba(249,115,22,0.55))'
+                        : 'none',
+                      transition: 'all 0.2s',
+                    }}
                   />
                   <span
                     style={{
                       fontSize: 9,
                       fontWeight: isActive ? 700 : 500,
-                      letterSpacing: '0.02em',
-                      color: accent ? '#f97316' : isActive ? '#fb923c' : 'rgba(255,255,255,0.38)',
+                      letterSpacing: '0.03em',
+                      color: accent ? '#f97316' : isActive ? '#fb923c' : 'rgba(255,255,255,0.36)',
                       transition: 'color 0.2s',
                     }}
                   >
@@ -185,21 +185,6 @@ export default function BottomNav() {
             })}
           </div>
         </div>
-
-        {/* Reflection / ground shadow */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: -10,
-            left: '10%',
-            right: '10%',
-            height: 12,
-            borderRadius: '50%',
-            background: 'rgba(0,0,0,0.3)',
-            filter: 'blur(8px)',
-            pointerEvents: 'none',
-          }}
-        />
       </nav>
     </>
   )
