@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ChevronLeft, Clock, Users, ChefHat, Bookmark, Share2, MessageCircle, Send } from 'lucide-react'
+import { ChevronLeft, Clock, Users, ChefHat, Bookmark, Share2, MessageCircle, Send, ChefHat as CookIcon } from 'lucide-react'
 import LikeButton from '../components/shared/LikeButton'
 import SaveModal from '../components/shared/SaveModal'
 import Avatar from '../components/shared/Avatar'
+import CookMode from '../components/recipe/CookMode'
 import { getRecipeById } from '../data/mockRecipes'
 import { getUserById } from '../data/mockUsers'
 import { useApp } from '../context/AppContext'
@@ -21,6 +22,7 @@ export default function RecipeDetailPage() {
   const { saved, toggleSave } = useApp()
   const { t, lang } = useLanguage()
   const [showSaveModal, setShowSaveModal] = useState(false)
+  const [showCookMode, setShowCookMode] = useState(false)
   const [comment, setComment] = useState('')
   const [activeStep, setActiveStep] = useState(null)
 
@@ -145,7 +147,16 @@ export default function RecipeDetailPage() {
 
           {/* Steps */}
           <div>
-            <h2 className="text-white font-bold text-base mb-3">{t('steps')}</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-white font-bold text-base">{t('steps')}</h2>
+              <button
+                onClick={() => setShowCookMode(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500 text-white text-xs font-bold hover:bg-orange-400 transition-colors"
+              >
+                <CookIcon size={13} />
+                Cook Mode
+              </button>
+            </div>
             <div className="space-y-3">
               {recipe.steps.map((step, i) => (
                 <button
@@ -219,6 +230,10 @@ export default function RecipeDetailPage() {
 
       {showSaveModal && (
         <SaveModal recipeId={recipe.id} onClose={() => setShowSaveModal(false)} />
+      )}
+
+      {showCookMode && (
+        <CookMode recipe={recipe} onClose={() => setShowCookMode(false)} />
       )}
     </>
   )
